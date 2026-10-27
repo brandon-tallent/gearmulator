@@ -11,9 +11,10 @@
 
 namespace xt
 {
-	Xt::Xt(const std::vector<uint8_t>& _romData, const std::string& _romName, const bool _voiceExpansion/* = false*/)
+	Xt::Xt(const std::vector<uint8_t>& _romData, const std::string& _romName, const bool _voiceExpansion/* = false*/,
+		const Board _board/* = Board::Xt*/)
 	{
-		m_hw.reset(new Hardware(_romData, _romName, _voiceExpansion));
+		m_hw.reset(new Hardware(_romData, _romName, _voiceExpansion, _board));
 
 		if(!isValid())
 			return;

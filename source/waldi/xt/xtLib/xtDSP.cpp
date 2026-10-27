@@ -16,7 +16,8 @@ namespace xt
 {
 	static dsp56k::DefaultMemoryValidator g_memoryValidator;
 
-	DSP::DSP(Hardware& _hardware, mc68k::Hdi08& _hdiUC, const uint32_t _index, const bool _voiceExpansion/* = false*/)
+	DSP::DSP(Hardware& _hardware, mc68k::Hdi08& _hdiUC, const uint32_t _index, const bool _voiceExpansion/* = false*/,
+		const Board _board/* = Board::Xt*/)
 	: m_hardware(_hardware), m_hdiUC(_hdiUC)
 	, m_index(_index)
 	, m_name({static_cast<char>('A' + _index)})
@@ -28,7 +29,7 @@ namespace xt
 		if(!_hardware.isValid())
 			return;
 
-		m_periphX.getEssiClock().setExternalClockFrequency(10'240'000);	// 10,24 MHz
+		m_periphX.getEssiClock().setExternalClockFrequency(_board == Board::Mw2 ? g_mw2DspCrystal : 10'240'000);
 
 		if (_voiceExpansion)
 		{

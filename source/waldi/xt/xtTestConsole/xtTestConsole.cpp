@@ -1,3 +1,5 @@
+#include "baseLib/commandline.h"
+
 #include "synthLib/consoleTools.h"
 
 #include "xtLib/xtUc.h"
@@ -6,11 +8,15 @@
 
 #include "dsp56kEmu/jitunittests.h"
 
-int main()
+int main(const int _argc, char* _argv[])
 {
 //	dsp56k::JitUnittests tests;
 
-	const std::unique_ptr uc(std::make_unique<xt::Xt>(std::vector<uint8_t>(), std::string()));
+	// -mw2 emulates the Microwave II main board instead of the XT
+	const baseLib::CommandLine cmdLine(_argc, _argv);
+	const auto board = cmdLine.contains("mw2") ? xt::Board::Mw2 : xt::Board::Xt;
+
+	const std::unique_ptr uc(std::make_unique<xt::Xt>(std::vector<uint8_t>(), std::string(), false, board));
 
 	constexpr uint32_t blockSize = 64;
 

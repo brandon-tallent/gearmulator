@@ -16,11 +16,13 @@ namespace xt
 		return Rom{_romName, _romData};
 	}
 
-	Hardware::Hardware(const std::vector<uint8_t>& _romData, const std::string& _romName, const bool _voiceExpansion/* = false*/)
+	Hardware::Hardware(const std::vector<uint8_t>& _romData, const std::string& _romName,
+		const bool _voiceExpansion/* = false*/, const Board _board/* = Board::Xt*/)
 		: wLib::Hardware(40000)
 		, m_rom(initializeRom(_romData, _romName))
 		, m_useVoiceExpansion(_voiceExpansion)
-		, m_uc(m_rom, _voiceExpansion)
+		, m_board(_board)
+		, m_uc(m_rom, _voiceExpansion, _board)
 		, m_midi(m_uc)
 	{
 		if(!m_rom.isValid())
@@ -29,6 +31,8 @@ namespace xt
 				"A Microwave II/XT ROM is required, but was not found: the full ROM as one 256 KB .bin file, or its two "
 				"halves as two 128 KB .bin files.");
 		}
+
+		assert((!m_useVoiceExpansion || m_board == Board::Xt) && "The voice expansion only exists for the XT");
 
 		if (m_useVoiceExpansion)
 		{
@@ -42,7 +46,7 @@ namespace xt
 		}
 		else
 		{
-			m_dsps.push_back(std::make_unique<DSP>(*this, m_uc.getHdi08A().getHdi08(), 0));
+			m_dsps.push_back(std::make_unique<DSP>(*this, m_uc.getHdi08A().getHdi08(), 0, false, _board));
 		}
 	}
 
@@ -295,8 +299,10 @@ namespace xt
 				// Feed silence to main DSP's ESSI0 RX (exp3 doesn't use external audio input)
 				essiMain.processAudioInputInterleaved(inputs, processCount, _latency);
 			}
-			else
+			else if (m_board == Board::Xt)
 			{
+				// The Microwave II has no audio input, its DSP never enables the ESSI0 receiver and would not
+				// consume these
 				essiMain.processAudioInputInterleaved(inputs, processCount, _latency);
 			}
 
@@ -316,6 +322,26 @@ namespace xt
 			}
 
 			essiMain.processAudioOutputInterleaved(outputs, processCount);
+
+			if (m_board == Board::Mw2)
+			{
+				// The Microwave II DAC reads each transmitter as one 48 bit word, slot 0 holds the lower and slot 1 the
+				// upper half. Restore the 24 bit samples of TX0 (main out) and TX1 (sub out)
+				constexpr uint64_t wordMask = 0xffffff;
+
+				for (uint32_t tx = 0; tx < 2; ++tx)
+				{
+					auto* lo = outputs[tx * 2];
+					auto* hi = outputs[tx * 2 + 1];
+
+					for (uint32_t i = 0; i < processCount; ++i)
+					{
+						const auto word = ((hi[i] & wordMask) << 24 | (lo[i] & wordMask)) << g_mw2DacShift;
+						lo[i] = static_cast<dsp56k::TWord>((word >> 24) & wordMask);
+						hi[i] = static_cast<dsp56k::TWord>(word & wordMask);
+					}
+				}
+			}
 
 			if (m_useVoiceExpansion)
 			{

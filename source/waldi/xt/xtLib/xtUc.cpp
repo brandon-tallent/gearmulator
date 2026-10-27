@@ -14,7 +14,7 @@
 
 namespace xt
 {
-	XtUc::XtUc(const Rom& _rom, const bool _voiceExpansion/* = false*/)
+	XtUc::XtUc(const Rom& _rom, const bool _voiceExpansion/* = false*/, const Board _board/* = Board::Xt*/)
 	: m_flash(m_romRuntimeData.data(), m_romRuntimeData.size(), false, true)
 	, m_pic(*this, m_lcd)
 	{
@@ -35,6 +35,10 @@ namespace xt
 		{
 			// Signal expansion board presence to the firmware via PORTGP hardware config pins
 			getPortGP().writeRX(0x00);
+		}
+		else if (_board == Board::Mw2)
+		{
+			getPortGP().writeRX(g_mw2PortGpStrap);
 		}
 
 		getPortGP().setWriteTXCallback([this](const mc68k::Port&)

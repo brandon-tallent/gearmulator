@@ -22,7 +22,7 @@ namespace xt
 	class XtUc final : public mc68k::Mc68k
 	{
 	public:
-		XtUc(const Rom& _rom, bool _voiceExpansion = false);
+		XtUc(const Rom& _rom, bool _voiceExpansion = false, Board _board = Board::Xt);
 		uint32_t exec() override;
 
 		uint16_t readImm16(uint32_t _addr) override;

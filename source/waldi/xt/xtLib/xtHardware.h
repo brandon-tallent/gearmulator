@@ -22,7 +22,8 @@ namespace xt
 	class Hardware : public wLib::Hardware
 	{
 	public:
-		explicit Hardware(const std::vector<uint8_t>& _romData, const std::string& _romName, bool _voiceExpansion = false);
+		explicit Hardware(const std::vector<uint8_t>& _romData, const std::string& _romName,
+			bool _voiceExpansion = false, Board _board = Board::Xt);
 		~Hardware() override;
 
 		void process();
@@ -67,6 +68,7 @@ namespace xt
 
 		const Rom m_rom;
 		const bool m_useVoiceExpansion;
+		const Board m_board;
 
 		XtUc m_uc;
 		TAudioInputs m_audioInputs;
